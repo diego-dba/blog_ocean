@@ -13,7 +13,7 @@ app = Flask("hello")
 posts = [
     {
         "title": "Meu primeiro post",
-        "body" : "Aqui é o texto do post",
+        "body" : "Mussum Ipsum, cacilds vidis litro abertis. Em pé sem cair, deitado sem dormir, sentado sem cochilar e fazendo pose.Cevadis im ampola pa arma uma pindureta.Quem num gosta di mé, boa gentis num é.Delegadis gente finis, bibendum egestas augue arcu ut est.",
         "author": "Larissa",
         "created": datetime(2022,7,25)
     },
@@ -36,3 +36,7 @@ def index():
 #@app.route("/meucontato")
 #def meuContato():
     #return render_template('index.html', email='didi.ego@gmail.com', nome='Danilo', telefone="98767888")
+
+    @app.route('/login')
+    def login():
+        return render_template("login.html")
