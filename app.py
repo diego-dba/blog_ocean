@@ -1,42 +1,58 @@
-#importar biblioteca
-#flask run comando para rodar
-#ctrl c cokmando para parar de rodar o comando
-#cuidar com a identação, super importante no python
-#FLASK_RUN_HOST - 0.0.0.0  O FLASK SALVA AUTOMATICAMENTE
-from flask import Flask, render_template
-#importar data de criação
+
+from flask import Flask, render_template, redirect, url_for
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask("hello")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = "pudim"
 
-#CRIAR MOCk
-posts = [
-    {
-        "title": "Meu primeiro post",
-        "body" : "Mussum Ipsum, cacilds vidis litro abertis. Em pé sem cair, deitado sem dormir, sentado sem cochilar e fazendo pose.Cevadis im ampola pa arma uma pindureta.Quem num gosta di mé, boa gentis num é.Delegadis gente finis, bibendum egestas augue arcu ut est.",
-        "author": "Larissa",
-        "created": datetime(2022,7,25)
-    },
-    {
-        "title": "Meu segundo post",
-        "body" : "Aqui é o texto do post",
-        "author": "Anna",
-        "created": datetime(2022,7,26)
-    },   
-]
 
-#rota da aplicação na pg
+db = SQLAlchemy(app)
+
+#criar classes do Mock, ou seja, o banco de dados
+class Post(db.Model):
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(80), nullable=False)
+    body = db.Column(db.String(500))
+    created = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+class User(db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(20), nullable=False, unique=True, index=True) 
+    email = db.Column(db.String(64), nullable=False, unique=True)
+    password_hash = db.Column(db.String(128), nullable=False)
+    posts = db.relationship('Post', backref='author')
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+        
+
+db.create_all()
+     #rota da aplicação na pg
+
 @app.route("/")
-#@app.route("/hello")
 def index(): 
     #renderizar template
+    posts = Post.query.all()
     return render_template("index.html", posts=posts)
 
- #criar outra rota
+
+#@app.route('/login')
+#def login():
+#        Post.query.all()  #pra devolver todos os posts
+#        return render_template("login.html"
+
+#criar outra rota
 #@app.route("/meucontato")
 #def meuContato():
     #return render_template('index.html', email='didi.ego@gmail.com', nome='Danilo', telefone="98767888")
 
-    @app.route('/login')
-    def login():
-        return render_template("login.html")
+
