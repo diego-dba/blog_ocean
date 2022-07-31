@@ -4,13 +4,11 @@ html {
     padding: 1rem;
     border-color: black;
 }
-
 h1 {
     padding: 1rem;
     color: navy;
     font-family: serif;
 }
-
 body {
     color: blue;
     max-width: 960px;
@@ -19,26 +17,37 @@ body {
     background: #eee;
 
 }
-
 hr {
     border: none;
     border-top: 1px solid lightseagreen;
 }
-
 .content {
     padding: 0 2rem 1rem;
     border-radius: auto;
+    background-color: #fff;
 
 }
-
 .post .about{
     color: aqua;
     font-style: italic;
     white-space: pre-line;
 
 }
-
 .no-posts{
     font-style: italic;
     color: gray;
+}
+.content form{
+    margin: 1em auto;
+    display: flex;
+    flex-direction: column;
+    border: 1em;
+    padding: 1em;
+}
+.content label{
+    font-weight: bold;
+    margin-bottom: 0.5em;
+}
+.content input{
+    margin-bottom: 1em;
 }

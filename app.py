@@ -1,7 +1,7 @@
-
 from flask import Flask, render_template, redirect, url_for
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask("hello")
@@ -9,10 +9,9 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "pudim"
 
-
 db = SQLAlchemy(app)
-
-#criar classes do Mock, ou seja, o banco de dados
+login = LoginManager(app)
+ 
 class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -21,7 +20,7 @@ class Post(db.Model):
     created = db.Column(db.DateTime, nullable=False, default=datetime.now)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(20), nullable=False, unique=True, index=True) 
@@ -34,6 +33,10 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
         
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))
+
 
 db.create_all()
      #rota da aplicação na pg
@@ -43,6 +46,11 @@ def index():
     #renderizar template
     posts = Post.query.all()
     return render_template("index.html", posts=posts)
+
+@app.route('/register', methods=["GET", "POST"])
+def register ():
+    
+    return render_template('register.html')
 
 
 #@app.route('/login')
