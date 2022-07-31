@@ -86,4 +86,4 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
-    return render_template(url_for('index'))
+    return redirect(url_for('index'))
