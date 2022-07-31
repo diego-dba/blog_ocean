@@ -14,11 +14,11 @@ app.config["SECRET_KEY"] = "pudim"
 
 db = SQLAlchemy(app)
 login = LoginManager(app)
- 
+
 class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    title = db.Column(db.String(80), nullable=False)
+    title = db.Column(db.String(70), nullable=False)
     body = db.Column(db.String(500))
     created = db.Column(db.DateTime, nullable=False, default=datetime.now)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
@@ -36,7 +36,7 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-        
+
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
@@ -45,27 +45,26 @@ def load_user(id):
 db.create_all()
 
 @app.route("/")
-def index(): 
-    #renderizar template com os posts
-    posts = Post.query.all()
+def index():
+    posts = Post.query.order_by(-Post.created).all()
     return render_template("index.html", posts=posts)
 
-@app.route('/register', methods=["GET", "POST"])
+@app.route('/register', methods=["GET","POST"])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     if request.method == "POST":
-        username = request.form["username"]
-        email = request.form["email"]
-        password = request.form["password"]
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
         try:
             new_user = User(username=username, email=email)
             new_user.set_password(password)
             db.session.add(new_user)
             db.session.commit()
-        except IntegrityError: 
+        except IntegrityError:
             flash("Username or E-mail already exists!")
-        else:    
+        else:
             return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -74,16 +73,15 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form['username']
+        password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user is None or not user.check_password(password):
             flash("Incorrect Username or Password")
             return redirect(url_for('login'))
         login_user(user)
         return redirect(url_for('index'))
-
-    return render_template('login.html')
+    return render_template("login.html")
 
 @app.route('/logout')
 def logout():
@@ -102,5 +100,5 @@ def create():
             db.session.commit()
             return redirect(url_for('index'))
         except IntegrityError:
-            flash("Error on create Post, try again later")            
+            flash("Error on create Post, try again later")
     return render_template('create.html')
