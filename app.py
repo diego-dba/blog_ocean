@@ -1,8 +1,9 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, request, flash
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin
+from flask_login import LoginManager, UserMixin, current_user, logout_user, login_user
 from werkzeug.security import check_password_hash, generate_password_hash
+from sqlalchemy.exc import IntegrityError
 
 app = Flask("hello")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
@@ -27,6 +28,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(64), nullable=False, unique=True)
     password_hash = db.Column(db.String(128), nullable=False)
     posts = db.relationship('Post', backref='author')
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -39,28 +41,49 @@ def load_user(id):
 
 
 db.create_all()
-     #rota da aplicação na pg
 
 @app.route("/")
 def index(): 
-    #renderizar template
+    #renderizar template com os posts
     posts = Post.query.all()
     return render_template("index.html", posts=posts)
 
 @app.route('/register', methods=["GET", "POST"])
-def register ():
-    
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    if request.method == "POST":
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+        try:
+            new_user = User(username=username, email=email)
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
+        except IntegrityError: 
+            flash("Username or E-mail already exists!")
+        else:    
+            return redirect(url_for('login'))
     return render_template('register.html')
 
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        user = User.query.filter_by(username=username).first()
+        if user is None or not user.check_password(password):
+            flash("Incorrect Username or Password")
+            return redirect(url_for('login'))
+        login_user(user)
+        return redirect(url_for('index'))
 
-#@app.route('/login')
-#def login():
-#        Post.query.all()  #pra devolver todos os posts
-#        return render_template("login.html"
+    return render_template('login.html')
 
-#criar outra rota
-#@app.route("/meucontato")
-#def meuContato():
-    #return render_template('index.html', email='didi.ego@gmail.com', nome='Danilo', telefone="98767888")
-
-
+@app.route('/logout')
+def logout():
+    logout_user()
+    return render_template(url_for('index'))
